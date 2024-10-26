@@ -1,5 +1,5 @@
 [package]
-name = "chumsky_tutorial"
+name = "foo_llvm"
 version = "0.1.0"
 edition = "2021"
 
