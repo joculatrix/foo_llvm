@@ -1,0 +1,12 @@
+[package]
+name = "chumsky_tutorial"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+chumsky = { version = "1.0.0-alpha.7", features = ["extension"] }
+clap = { version = "4.5.20", features = ["derive"] }
+codesnake = "0.2.1"
+inkwell = { version = "0.5.0", features = ["llvm18-0"] }
+libffi = "3.2.0"
+yansi = "1.0.1"
