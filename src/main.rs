@@ -6,6 +6,7 @@ use inkwell::targets::FileType;
 use llvm::{print_module, LlvmGenerator};
 use parse::parser;
 
+mod bin;
 mod error;
 mod llvm;
 mod parse;
@@ -20,16 +21,24 @@ struct Args {
     #[arg(short, long)]
     output: Option<PathBuf>,
     /// The type of output to produce
-    #[arg(short, long, value_enum, default_value = "llvm-ir")]
+    #[arg(short, long, value_enum, default_value = "executable")]
     produce: OutputType,
     /// Target triple of the intended target machine to build for,
     /// in form <arch><sub_arch>-<vendor>-<sys>-<env>, e.g. x86_64-linux-gnu
     #[arg(short, long)]
     target: Option<String>,
+    /// Specify a specific linker to use, if producing an executable. If a
+    /// specific linker is chosen, the program will return an error if that
+    /// linker isn't found. If this option is omitted, the program will try
+    /// all options.
+    #[arg(short, long)]
+    linker: Option<Linker>,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 enum OutputType {
+    /// Output an executable application.
+    Executable,
     /// Output object file (.o)
     Object,
     /// Output assembly code (.s)
@@ -39,6 +48,20 @@ enum OutputType {
     /// Output LLVM IR (to stderr; specify an output path to write to a file, 
     /// typically .ll)
     LlvmIR,
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
+enum Linker {
+    /// LLVM's C-compiler frontend.
+    Clang,
+    /// The GNU Compiler Collection.
+    Gcc,
+    /// Use MSVC's linker.
+    Link,
+    /// Call the GNU linker directly.
+    Ld,
+    /// LLVM's linker.
+    Lld,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -80,6 +103,24 @@ fn main() -> Result<(), Box<dyn Error>> {
     match LlvmGenerator::generate(&ast, &context, &module, &builder) {
         Ok(_) => {
             match args.produce {
+                OutputType::Executable => {
+                    let obj_path = PathBuf::from("foo.o");
+                    // use scope to drop file after ensuring it exists
+                    { let _ = open_file(&obj_path)?; }
+                    let Some(machine) = llvm::machine_from_target(&target) else {
+                        return Err("failed to build target machine".into())
+                    };
+                    llvm::write_code_to_file(
+                        &machine,
+                        &module,
+                        &obj_path,
+                        FileType::Object
+                    )?;
+
+                    let out_path = get_output_path(args.output, "foo")?;
+
+                    bin::try_to_bin(&obj_path, &out_path, args.linker)?;
+                }
                 OutputType::Object => {
                     let path = get_output_path(args.output, "foo.o")?;
                     // use scope to drop file after ensuring it exists
@@ -153,8 +194,6 @@ fn get_output_path(
             Err(format!("{:#?} exists and isn't a file", path).into())
         }
     } else {
-        let mut path = PathBuf::new();
-        path.set_file_name(default);
-        Ok(path)
+        Ok(PathBuf::from(default))
     }
 }

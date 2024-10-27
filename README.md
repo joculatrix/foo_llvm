@@ -8,16 +8,20 @@ Rust wrapper around LLVM's API).
 
 ## Running the project
 
-To view the LLVM IR output of some input code:
+To get an executable:
 
 
 ```
 foo_llvm test.foo
 ```
 
-You can also set the `-p` flag to either `assembly` or `object` to get usable
-code output to a file. Unfortunately, you currently will then have to manually
-put the file into a C compiler like gcc before running it.
+You can also set the `-p` flag to `llvm-ir`, `assembly`, `bitcode`, or `object`
+to get other types of output. `llvm-ir`, by default, is written to stderr
+unless an output file is specified.
+
+Producing an executable requires a C compiler or linker: the options the
+program recognizes are `clang`, `gcc`, `ld`, `lld` (the LLVM linker), or
+`link` (the MSVC linker) -- if none are specified, it will try each.
 
 ## Building from source
 
