@@ -23,6 +23,8 @@ Producing an executable requires a C compiler or linker: the options the
 program recognizes are `clang`, `gcc`, `ld`, `lld` (the LLVM linker), or
 `link` (the MSVC linker) -- if none are specified, it will try each.
 
+> Note: Some linkers (specifically the MSVC linker) are currently untested.
+
 ## Building from source
 
 To build this project from source, you must have `llvm-config` and version 18
