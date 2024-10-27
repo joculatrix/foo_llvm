@@ -27,6 +27,7 @@ impl Linker {
 /// specified, to produce an executable from a given object or assembly file.
 /// 
 /// * `object` - the path to the object or assembly file produced by the compiler
+/// * `out` - the output path for the executable
 /// * `linker` - the linker, if any, specified by the user via CLI args
 pub fn try_to_bin(
     object: &PathBuf,
